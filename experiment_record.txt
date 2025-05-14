@@ -1,0 +1,17 @@
+1.dpo-curriculum-learning和dpo-curriculum-learning2选取的model有问题
+2.dpo-curriculum-learning3：（用了两个adapter，但是不符合论文中的思想）
+    base_model:HuggingFaceH4/zephyr-7b-beta
+    sft_adapter:alignment-handbook/zephyr-7b-sft-qlora
+    beta:0.1
+    COMMAND:python train_dpo_curriculumNI.py --wandb_run_name dpo-curriculum-learning3 --beta 0.1
+3.dpo-curriculum-learning4：（用了两个adapter，但是不符合论文中的思想）
+    base_model:HuggingFaceH4/zephyr-7b-beta
+    sft_adapter:alignment-handbook/zephyr-7b-sft-qlora
+    beta:0.1
+    COMMAND:python train_dpo_curriculumNI.py --wandb_run_name dpo-curriculum-learning4 --beta 0.1 --learning_rate 4e-6(原实验是多卡，我现在单卡，扩大为8倍先试试)
+
+4.python train_dpo_curriculum.py --wandb_run_name dpo-curriculum-learning5 --beta 0.1 --learning_rate 4e-6忘了修改epoch，应该设置为3
+5.python train_dpo_curriculum.py --wandb_run_name dpo-curriculum-learning6 --beta 0.1 --learning_rate 4e-6 --num_train_epochs 3但是忘记修改下一轮迭代的DPO adapter为上一轮训练完成后的
+  python train_dpo_curriculum.py --wandb_run_name dpo-curriculum-learning6 --beta 0.1 --learning_rate 4e-6 --num_train_epochs 3 --output_dir dpo_curriculum_results_I
+
+修改

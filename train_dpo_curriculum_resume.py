@@ -189,7 +189,7 @@ def train_dpo_curriculum(args: ScriptArguments):
     for epoch, difficulty in enumerate(difficulties, 1):
         checkpoint_dir = os.path.join(args.output_dir, f"epoch_{epoch}_{difficulty}")
         if os.path.exists(checkpoint_dir):
-            resume_epoch = epoch + 1
+            resume_epoch = epoch
             logger.info(f"Resuming training from {epoch}_{difficulty}")
             if resume_epoch <= len(difficulties):
                 resume_difficulty = difficulties[epoch]

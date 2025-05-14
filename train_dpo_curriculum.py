@@ -22,21 +22,14 @@ import multiprocessing
 
 # Setup logging
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 logging.basicConfig(
+    level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[logging.StreamHandler(sys.stdout)],
 )
-# 添加终端输出
-if not logger.handlers:
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-    formatter = logging.Formatter("[%(asctime)s] [%(levelname)s] %(message)s", "%Y-%m-%d %H:%M:%S")
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
-'''
-Reference Model固定不变
-'''
+
 @dataclass
 class ScriptArguments:
     # Model arguments
@@ -215,9 +208,14 @@ def train_dpo_curriculum(args: ScriptArguments):
     
     # 3.初始化分词器
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    tokenizer.pad_token = tokenizer.eos_token
+    #tokenizer.pad_token = tokenizer.eos_token
+    # 明确添加 [PAD] token
+    tokenizer.add_special_tokens({"pad_token": "[PAD]"})
     tokenizer.padding_side = 'right'
-    
+    # 模型适配新的 token
+    model.resize_token_embeddings(len(tokenizer))
+    model.config.pad_token_id = tokenizer.pad_token_id
+    model.config.vocab_size = len(tokenizer)
     # 4.Training arguments base config
     base_training_args = {
         "output_dir": args.output_dir,
@@ -281,7 +279,22 @@ def train_dpo_curriculum(args: ScriptArguments):
         dpo_trainer.log_metrics("train", metrics)
         dpo_trainer.save_metrics("train", metrics)
         
-        # Save checkpoint
+        # ✅ 手动 log 到 wandb
+        wandb.log({
+            "epoch": epoch,
+            "difficulty": difficulty,
+            "train/loss": metrics.get("train_loss", None),
+            # DPO specific metrics
+            "train/rewards/chosen": metrics.get("train_rewards/chosen", None),
+            "train/rewards/rejected": metrics.get("train_rewards/rejected", None),
+            "train/rewards/accuracies": metrics.get("train_rewards/accuracies", None),
+            "train/rewards/margins": metrics.get("train_rewards/margins", None),
+            "train/logps/chosen": metrics.get("train_logps/chosen", None),
+            "train/logps/rejected": metrics.get("train_logps/rejected", None),
+            "train/logits/chosen": metrics.get("train_logits/chosen", None),
+            "train/logits/rejected": metrics.get("train_logits/rejected", None),
+        }, step=dpo_trainer.state.global_step)
+                # Save checkpoint
         dpo_trainer.save_model(current_output_dir)
         
         # 如果不是最后一个难度，需要为下一个难度准备模型
