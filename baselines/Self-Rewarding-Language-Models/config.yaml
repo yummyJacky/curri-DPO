@@ -1,0 +1,41 @@
+# Static configuration
+cuda_visible_devices: "0, 1"
+model_name: "mistralai/Mistral-7B-v0.1"
+tokenizer_name: "mistralai/Mistral-7B-v0.1"
+
+data_directory: "data"
+ift_dataset: "ift.jsonl"
+model_directory: "results"
+
+wandb_enable: True
+wandb_project: "Self Rewarding Language Models"
+
+peft_config:
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+  lora_dropout: 0.5
+  lora_alpha: 16
+  lora_r: 16
+
+iterations: 5
+
+sft_training:
+  learning_rate: 5e-5
+  batch_size: 4
+  max_seq_length: 1024
+
+dpo_training:
+  learning_rate: 5e-5
+  batch_size: 4
+  max_seq_length: 1024
+  max_prompt_length: 1024
+
+generate_prompts:
+  new_prompts: 500
+
+response_prompts:
+  new_prompts: 4
